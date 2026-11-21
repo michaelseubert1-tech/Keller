@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#236f48">
+<meta name="description" content="Keller-Schimmelcheck: Taupunkt und relative Luftfeuchtigkeit an der kältesten Wandoberfläche berechnen.">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>Keller-Schimmelcheck</title>
+<style>
+:root{color-scheme:light;--ink:#1f3028;--muted:#65756c;--line:#dce6df;--paper:#fff;--bg:#f1f6f2;--green:#258653;--amber:#a87513;--red:#bd413b;--shadow:0 14px 40px #203b2b12}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;padding-bottom:env(safe-area-inset-bottom)}
+main{max-width:820px;margin:28px auto;padding:0 18px 38px}.top{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:18px}
+h1{font-size:clamp(1.7rem,4vw,2.25rem);line-height:1.15;margin:0 0 7px;letter-spacing:-.035em}.sub{color:var(--muted);margin:0}.house{font-size:2.1rem}
+.panel{background:var(--paper);border:1px solid var(--line);border-radius:20px;padding:clamp(18px,4vw,28px);box-shadow:var(--shadow);margin:16px 0}
+h2{font-size:1.08rem;margin:0 0 16px}.inputs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+label{display:block;font-size:.9rem;font-weight:650;margin-bottom:7px}
+input{width:100%;border:1px solid #cbd8cf;border-radius:11px;padding:13px 12px;font:inherit;font-size:1.05rem;color:var(--ink);background:#fff}
+input:focus{outline:3px solid #2586532a;border-color:var(--green)}
+.hint{font-size:.78rem;color:var(--muted);margin-top:6px}
+.eyebrow{font-size:.83rem;color:var(--muted);font-weight:650}
+.value{font-size:clamp(2.7rem,8vw,4.2rem);line-height:1.05;font-weight:760;letter-spacing:-.055em;margin:6px 0 10px;font-variant-numeric:tabular-nums}
+.status{display:inline-flex;align-items:center;border-radius:999px;padding:7px 12px;font-size:.88rem;font-weight:700}
+.status.green{background:#e5f4eb;color:#17683e}.status.amber{background:#fff3d8;color:#805608}.status.red{background:#fde9e7;color:#9f302b}
+.message{margin:15px 0 0;color:#33483c}
+.metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:20px}
+.metric{background:#f5f8f5;border-radius:12px;padding:13px 15px}.metric span{display:block;color:var(--muted);font-size:.82rem}.metric strong{font-size:1.18rem;font-variant-numeric:tabular-nums}
+.note,.foot{font-size:.86rem;color:var(--muted);margin:0}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+button{border:0;border-radius:12px;padding:13px 17px;font:inherit;font-weight:700;cursor:pointer;min-height:48px}
+.primary{background:#236f48;color:white}.secondary{background:#e8efe9;color:#284235}
+button:disabled{opacity:.5;cursor:not-allowed}button:focus-visible{outline:3px solid #25865355;outline-offset:2px}
+.install-help{margin-top:12px;padding:12px 14px;border-radius:12px;background:#f5f8f5;color:#42564a;font-size:.88rem}
+@media(max-width:650px){.inputs{grid-template-columns:1fr}.metrics{grid-template-columns:1fr 1fr}.top{align-items:flex-start}}
+@media(max-width:390px){.metrics{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<main>
+<header class="top"><div><h1>Keller-Schimmelcheck</h1><p class="sub">Raumklima und Feuchtigkeit an der kältesten Wandoberfläche einschätzen</p></div><div class="house" aria-hidden="true">⌂</div></header>
+<section class="panel"><h2>1. Messwerte eingeben</h2><div class="inputs">
+<div><label for="roomTemp">Raumtemperatur (°C)</label><input id="roomTemp" type="number" inputmode="decimal" min="-20" max="60" step="0.1" value="20"><div class="hint">Temperatur der Raumluft</div></div>
+<div><label for="roomRh">Relative Luftfeuchtigkeit (%)</label><input id="roomRh" type="number" inputmode="decimal" min="1" max="100" step="1" value="60"><div class="hint">Messwert des Hygrometers</div></div>
+<div><label for="wallTemp">Kälteste Wandtemperatur (°C)</label><input id="wallTemp" type="number" inputmode="decimal" min="-20" max="60" step="0.1" value="14"><div class="hint">Oberflächentemperatur der Wand</div></div>
+</div></section>
+<section class="panel" aria-live="polite"><div class="eyebrow">2. Relative Luftfeuchtigkeit an der Wand</div><div class="value" id="surfaceValue">76,0 %</div><span class="status amber" id="status">Erhöhte Aufmerksamkeit</span><p class="message" id="message">Die Wandoberfläche ist bereits deutlich feuchter als die Raumluft. Bei längerem Anhalten können Bedingungen entstehen, unter denen Schimmel wachsen kann. Lüften und Heizen überprüfen und die Messung regelmäßig wiederholen.</p>
+<div class="metrics"><div class="metric"><span>Taupunkt der Raumluft</span><strong id="dewValue">12,0 °C</strong></div><div class="metric"><span>Abstand der Wand zum Taupunkt</span><strong id="reserveValue">2,0 °C</strong></div></div></section>
+<section class="panel"><h2>Hinweise zur Einschätzung</h2><p class="note">Die Stufen sind praktische Orientierungsbereiche, keine amtlich festgelegten Risikoklassen. Entscheidend sind auch Dauer, Material, Temperatur und mögliche Feuchtequellen. Schimmel kann entstehen, ohne dass sichtbares Kondenswasser vorhanden ist.</p>
+<div class="actions"><button class="primary" id="installBtn" hidden>App installieren</button><button class="secondary" id="resetBtn">Beispielwerte zurücksetzen</button></div>
+<div class="install-help" id="installHelp" hidden></div>
+<p class="foot" style="margin-top:15px">Die Berechnung erfolgt lokal auf diesem Gerät. Es werden keine Messwerte übertragen.</p></section>
+<p class="foot">Berechnungsgrundlage: Magnus-Näherung für den Taupunkt und die relative Feuchte an der Wandoberfläche. Das Ergebnis ist eine Orientierungshilfe und ersetzt keine bauphysikalische Untersuchung.</p>
+</main>
+<script>
+(() => {
+const $=id=>document.getElementById(id), ids=['roomTemp','roomRh','wallTemp'];
+const fmt=(n,d=1)=>n.toLocaleString('de-DE',{minimumFractionDigits:d,maximumFractionDigits:d});
+const ps=t=>6.112*Math.exp(17.62*t/(243.12+t));
+const dew=(t,rh)=>{const a=Math.log(rh/100)+17.62*t/(243.12+t);return 243.12*a/(17.62-a)};
+function assessment(v){
+if(v>=100)return ['Tauwasser möglich','red','Die Luft erreicht an der Wandoberfläche den Sättigungspunkt oder überschreitet ihn rechnerisch. Kondensation kann auftreten. Die Situation sollte zeitnah überprüft und die Ursache der Feuchtigkeit gesucht werden.'];
+if(v>=80)return ['Kritischer Feuchtebereich','red','Die Oberflächenfeuchte liegt in einem Bereich, in dem viele Schimmelpilzarten wachsen können. Wenn dieser Zustand länger besteht, ist das Schimmelrisiko deutlich erhöht. Feuchteursache prüfen, Raumklima verbessern und die Wand regelmäßig kontrollieren.'];
+if(v>=70)return ['Erhöhte Aufmerksamkeit','amber','Die Wandoberfläche ist bereits deutlich feuchter als die Raumluft. Bei längerem Anhalten können Bedingungen entstehen, unter denen Schimmel wachsen kann. Lüften und Heizen überprüfen und die Messung regelmäßig wiederholen.'];
+return ['Eher unkritisch','green','Bei diesem Messwert sind die Bedingungen an der Wandoberfläche derzeit vergleichsweise günstig. Ein erhöhtes Schimmelrisiko durch Oberflächenfeuchte ist nach dieser Berechnung eher unwahrscheinlich. Weiterhin regelmäßig kontrollieren.'];
+}
+function update(){
+const t=Number($('roomTemp').value),rh=Number($('roomRh').value),tw=Number($('wallTemp').value);
+const valid=ids.every(id=>$(id).value!=='')&&Number.isFinite(t)&&Number.isFinite(rh)&&Number.isFinite(tw)&&t>-20&&t<60&&tw>-20&&tw<60&&rh>0&&rh<=100;
+if(!valid){$('surfaceValue').textContent='—';$('status').textContent='Eingaben prüfen';$('status').className='status amber';$('message').textContent='Bitte gültige Werte eingeben: Temperaturen zwischen −20 und 60 °C sowie eine relative Luftfeuchtigkeit über 0 bis 100 %.';$('dewValue').textContent='—';$('reserveValue').textContent='—';return;}
+const d=dew(t,rh),v=rh*ps(t)/ps(tw),[label,cls,msg]=assessment(v);
+$('surfaceValue').textContent=fmt(v)+' %';$('status').textContent=label;$('status').className='status '+cls;$('message').textContent=msg;$('dewValue').textContent=fmt(d)+' °C';$('reserveValue').textContent=fmt(tw-d)+' °C';
+}
+ids.forEach(id=>$(id).addEventListener('input',update));
+$('resetBtn').addEventListener('click',()=>{$('roomTemp').value=20;$('roomRh').value=60;$('wallTemp').value=14;update()});
+let installPrompt=null;
+const installBtn=$('installBtn'), help=$('installHelp');
+window.addEventListener('beforeinstallprompt',event=>{
+ event.preventDefault(); installPrompt=event; installBtn.hidden=false;
+});
+installBtn.addEventListener('click',async()=>{
+ if(!installPrompt){showInstallHelp();return;}
+ installPrompt.prompt(); await installPrompt.userChoice; installPrompt=null; installBtn.hidden=true;
+});
+window.addEventListener('appinstalled',()=>{installBtn.hidden=true;help.hidden=false;help.textContent='Die App wurde installiert. Du findest sie jetzt auf deinem Startbildschirm bzw. in deiner App-Übersicht.';});
+function showInstallHelp(){
+ help.hidden=false;
+ help.textContent='Wenn keine Installationsabfrage erscheint: Öffne diese Seite in Chrome auf Android, tippe oben rechts auf ⋮ und wähle „App installieren“ oder „Zum Startbildschirm hinzufügen“.';
+}
+if('serviceWorker' in navigator && (location.protocol==='https:' || location.hostname==='localhost')){
+ window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+}
+if(window.matchMedia('(display-mode: standalone)').matches){installBtn.hidden=true;}
+update();
+})();
+</script>
+</body></html>
